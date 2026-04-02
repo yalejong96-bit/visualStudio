@@ -3,10 +3,10 @@ import { NavDropdown, Navbar, Container, Nav } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 type MenuItemsProps = {
-    appName: string;
+   appName: string;
 };
 
-function App({appName} : MenuItemsProps) {
+function App({ appName }: MenuItemsProps) {
    console.log('xxx 프롭스 : ' + appName);
    const navigate = useNavigate();
 

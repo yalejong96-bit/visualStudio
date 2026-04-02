@@ -5,26 +5,26 @@ import axios from "axios";
 import { Table } from "react-bootstrap";
 
 
-function App(){
-  const [fruit, setFruit] =useState<Fruit | null>(null); // 넘겨 받은 과일 1개
+function App() {
+    const [fruit, setFruit] = useState<Fruit | null>(null); // 넘겨 받은 과일 1개
 
-  useEffect(() => { // Backedn 서버에서 데이터 받아 오기
-    const fetchResult = async () => {
-      try{
-          const url = `${API_BASE_URL}/fruit` ; // 요청할 url 주소
-          const config = {withCredentials: true} ;
-          const response = await axios.get<Fruit>(url, config);
-          setFruit(response.data);
+    useEffect(() => { // Backedn 서버에서 데이터 받아 오기
+        const fetchResult = async () => {
+            try {
+                const url = `${API_BASE_URL}/fruit`; // 요청할 url 주소
+                const config = { withCredentials: true };
+                const response = await axios.get<Fruit>(url, config);
+                setFruit(response.data);
 
-      }catch(error){
-        console.log(error);
-      }
-    };
+            } catch (error) {
+                console.log(error);
+            }
+        };
 
-    fetchResult(); // 직접 호출
-  }, []);
+        fetchResult(); // 직접 호출
+    }, []);
 
-      return (
+    return (
         <>
             <Table hover style={{ margin: '20px' }}>
                 <tbody>

@@ -34,11 +34,14 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {fruitList.map((fruit) =>
+          {fruitList.map((fruit, index) =>
             <tr key={fruit.id}>
               <td>{fruit.id}</td>
               <td>{fruit.name}</td>
               <td>{fruit.price.toLocaleString()}</td>
+              {index === 0 &&
+
+                (<td rowSpan={fruitList.length}>{fruitList.length}</td>)}
             </tr>
           )}
         </tbody>
