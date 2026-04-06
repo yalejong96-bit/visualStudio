@@ -4,7 +4,7 @@ import './App.css';
 // import 컴포넌트이름 from '경로와 파일명';
 import MenuItems from './ui/MenuItems';
 import AppRoutes from './routes/AppRoutes';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { User } from './types/User';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,14 +13,14 @@ function App() {
 
   const [user, setUser] = useState<User | null>(null);
 
-  useInserEffect(() => {
+  useEffect(() => {
     const loginUser = localStorage.getItem('user');
 
     if(typeof loginUser === 'string'){
       const parsed = JSON.parse(loginUser);
         setUser(parsed);
     }
-  }, [])
+  },[])
 
   // 로그인 성공시 처리해야할 동작을 명시하는 함수
   const handleLoginSuccess = (userData: User) => {
