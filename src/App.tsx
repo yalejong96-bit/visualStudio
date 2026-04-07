@@ -36,6 +36,7 @@ function App() {
     event.preventDefault();
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
     console.log('로그 아웃 성공');
     navigate('/member/login')
   };
