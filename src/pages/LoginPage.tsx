@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Alert, Button, Card, Col, Container, Form, Row } from "react-bootstrap";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, } from "react-router-dom";
 
 import axios from "../api/axiosInstance.tsx";
 import type { LoginResponse, User } from "../types/User";
