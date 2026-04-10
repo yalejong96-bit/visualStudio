@@ -8,6 +8,7 @@ import LoginPage from "../pages/LoginPage";
 import type { User } from "../types/User";
 import ProductList from './../pages/ProductList';
 import ProductInsertForm from './../pages/ProductInsertForm';
+import ProductUpdateForm from './../pages/ProductUpdateForm';
 
 interface AppProps {
   user: User | null;
@@ -27,6 +28,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/product/list" element={<ProductList user={user} />} />
 
       <Route path='/product/insert' element={<ProductInsertForm user={user} />} />
+
+      <Route path='/product/update/:id' element={<ProductUpdateForm user={user} />} />
     </Routes>
   );
 }
