@@ -161,6 +161,10 @@ function App({ user }: AppProps) {
             return; // 수정 중단
         }
 
+        if (!product.image.startsWith('data:image/')) {
+            alert('이미지 파일이 아닙니다.')
+            return;
+        }
         try {
             // 주의) 라우팅 규칙 때문에 ${id}를 제거하면 안됩니다.
             const url = `${API_BASE_URL}/product/update/${id}`;

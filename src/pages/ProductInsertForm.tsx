@@ -61,7 +61,7 @@ function App({ user }: ProductInsertFormProps) {
             return;
         }
 
-        const file = files[0]; // type="file"로 작성한 첫 번째 항목
+        const file = files[0]; // type="file"로 작성한 첫 번째 항목         
 
         // FileReader : 이미지(바이트) 파일을 읽어서 JS가 이해할 수 있도록 변경해주는 번역기
         const reader = new FileReader();
@@ -85,6 +85,11 @@ function App({ user }: ProductInsertFormProps) {
         if(product.category === '-'){
             alert('상품 카테고리는 반드시 선택해 주셔야 합니다.');
             return ;
+        }
+
+        if (!product.image.startsWith('data:image')) {
+            alert('이미지 파일이 아닙니다.')
+            return;
         }
 
         try{
