@@ -82,20 +82,20 @@ function App({ user }: ProductInsertFormProps) {
     const SubmitAction = async (event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if(product.category === '-'){
+        if (product.category === '-') {
             alert('상품 카테고리는 반드시 선택해 주셔야 합니다.');
-            return ;
-        }
-
-        if (!product.image.startsWith('data:image')) {
-            alert('이미지 파일이 아닙니다.')
             return;
         }
 
-        try{
+        // if (!product.image.startsWith('data:image')) {
+        //     alert('이미지 파일이 아닙니다.')
+        //     return;
+        // }
+
+        try {
             const url = `${API_BASE_URL}/product/insert`;
-            const config ={
-                headers:{ 'Content-Type': 'application/json' }
+            const config = {
+                headers: { 'Content-Type': 'application/json' }
             };
 
             const response = await customAxios.post(url, product, config);
@@ -111,7 +111,7 @@ function App({ user }: ProductInsertFormProps) {
 
             navigate('/product/list');
 
-        }catch (error: unknown) {
+        } catch (error: unknown) {
             console.log(error);
             if (axios.isAxiosError(error) && error.response) {
                 // 백엔드에서 전달받은 오류 메시지를 저장

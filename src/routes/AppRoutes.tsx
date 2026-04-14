@@ -9,7 +9,8 @@ import type { User } from "../types/User";
 import ProductList from './../pages/ProductList';
 import ProductInsertForm from './../pages/ProductInsertForm';
 import ProductUpdateForm from './../pages/ProductUpdateForm';
-import ProductDetail from './..//pages/ProductDetail';
+import ProductDetail from './../pages/ProductDetail';
+import CartList from './../pages/CartList'
 
 interface AppProps {
   user: User | null;
@@ -33,6 +34,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/product/update/:id' element={<ProductUpdateForm user={user} />} />
 
       <Route path='/product/detail/:id' element={<ProductDetail user={user} />} />
+
+      <Route path='/cart/list' element={<CartList user={user} />} />
     </Routes>
   );
 }
