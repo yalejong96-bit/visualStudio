@@ -41,6 +41,12 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
          <Container>
             <Navbar.Brand href='/'>{appName}</Navbar.Brand>
             <Nav className="me-auto">
+               {/* 사용자 이름 표시 */}
+               {user && (
+                  <Nav.Item className="text-white fw-bold fs-5 me-3 d-flex align-items-center">
+                     {user.name}님
+                  </Nav.Item>
+               )}
 
                <Nav.Link onClick={() => navigate(`/product/list`)}>상품 보기</Nav.Link>
 

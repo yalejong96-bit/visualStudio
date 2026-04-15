@@ -36,7 +36,6 @@ function App({ user }: AppProps) {
         setQuantity(newValue);
     };
 
-
     // 파라미터 id가 갱신이 되면 화면을 다시 rendering 시킵니다.
     useEffect(() => {
         if (!user) {
@@ -123,7 +122,7 @@ function App({ user }: AppProps) {
 
             if (axios.isAxiosError(error)) {
                 console.log(error.response?.data);
-                alert('장바구니 추가 실패');
+                alert(error.response?.data);
             } else {
                 console.log('예상치 못한 오류', error);
             }

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import customAxios from './../api/axiosInstance';
 import type { CartProduct } from "../types/CartProduct";
 import { API_BASE_URL } from "../config/config";
+import { all } from "axios";
 
 /* 
 구조 분해 할당 + 타입 지정
@@ -25,7 +26,7 @@ type AppProps = {
 }
 
 function App({ user }: AppProps) {
-    const thStyle = { fontSize: '1.2rem', textAlign: 'center' }as const; // 테이블 헤더 스타일    
+    const thStyle = { fontSize: '1.2rem', textAlign: 'center' } as const; // 테이블 헤더 스타일    
 
     const [cartProducts, setCartProducts] = useState<CartProduct[]>([]);
 
@@ -54,6 +55,122 @@ function App({ user }: AppProps) {
         }
     };
 
+    const [orderTotalPrice, setOrderTotalPrice] = useState(0);
+
+    const refreshOrderTotalPrice = (products: CartProduct[]) => {
+        let total = 0;
+
+        products.forEach((bean) => {
+            if (bean.checked) {
+                total += bean.price * bean.quantity;
+            }
+        });
+
+        setOrderTotalPrice(total);
+    };
+
+    const toggleAllCheckBox = (isAllCheck: boolean) => {
+        setAllCheck(!!isAllCheck);
+        setCartProducts((previous) => {
+            const updatedProducts = previous.map((product) => ({
+                ...product,
+                checked: isAllCheck
+            }));
+
+            refreshOrderTotalPrice(updatedProducts);
+
+            return updatedProducts;
+        });
+    };
+
+    const toggleCheckBox = (cartProductId: number) => {
+        console.log(`카트 상품 아이디 : ${cartProductId}`);
+
+        setCartProducts((previous) => {
+            const updatedProducts = previous.map((product) =>
+                product.cartProductId === cartProductId
+                    ? { ...product, checked: !product.checked }
+                    : product
+            );
+
+            // const isEverySingleItemChecked = updatedProducts.length > 0 &&
+            //     updatedProducts.every(p => p.checked);
+
+            // setAllCheck(isEverySingleItemChecked);
+
+            setAllCheck(updatedProducts.filter(p => p.checked).length == updatedProducts.length)
+
+            refreshOrderTotalPrice(updatedProducts);
+
+            return updatedProducts;
+        });
+    };
+
+    const [allCheck, setAllCheck] = useState(false);
+
+    const changeQuantity = async (cartProductId: number, quantity: number, productId: number) => {
+        // Nan : Not a Number
+        if (isNaN(quantity)) { // 숫자 형식이 아니면
+
+            alert('수량 변경은 최소 1이상이어야 합니다.')
+            return;
+        }
+
+        try {
+            const parameter = `quantity = ${quantity}&productId=${productId}`;
+
+            const url = `${API_BASE_URL}/cart/edit/${cartProductId}?${parameter}`;
+
+            const response = await customAxios.patch(url);
+
+            console.log(response.data || '')
+
+            // cartProducts의 수량 정보를 갱신합니다.
+            setCartProducts((previous) => {
+                const updatedProducts = previous.map((product) =>
+                    product.cartProductId === cartProductId
+                        ? { ...product, quantity: quantity }
+                        : product
+                );
+
+                refreshOrderTotalPrice(updatedProducts);
+                return updatedProducts;
+            });
+        } catch (error) {
+            console.log('카트 상품 수량 변경 실패');
+            console.log(error);
+        }
+    };
+
+    const deleteCartProduct = async (cartProductId: number) => {
+        const isConfirmed = window.confirm('해당 카트 상품을 정말로 삭제하시겠습니까?');
+
+        if (isConfirmed) {
+            try {
+                const url = `${API_BASE_URL}/cart/delete/${cartProductId}`;
+                const response = await customAxios.delete(url);
+
+                setCartProducts((previous) => {
+                    const updatedProducts
+                        = previous.filter((bean) => bean.cartProductId !== cartProductId);
+
+                    refreshOrderTotalPrice(updatedProducts);
+
+                    return updatedProducts;
+                });
+
+                alert(response.data);
+
+            } catch (error) {
+                console.log('카트 상품 삭제 동작 오류');
+                console.log(error);
+            }
+
+        } else {
+            alert(`'카트 상품' 삭제를 취소하셨습니다.`);
+        }
+    }
+
     return (
         <Container className="mt-4">
             <h2 className="mb-4">
@@ -68,6 +185,12 @@ function App({ user }: AppProps) {
                             <Form.Check
                                 type="checkbox"
                                 label="전체 선택"
+                                checked={allCheck}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setAllCheck(checked);
+                                    toggleAllCheckBox(checked);
+                                }}
                             />
                         </th>
                         <th style={thStyle}>상품 정보</th>
@@ -85,6 +208,7 @@ function App({ user }: AppProps) {
                                     <Form.Check
                                         type="checkbox"
                                         checked={product.checked}
+                                        onChange={() => toggleCheckBox(product.cartProductId)}
                                     />
                                 </td>
                                 <td className="text-center align-middle">
@@ -112,6 +236,12 @@ function App({ user }: AppProps) {
                                         min={1}
                                         value={product.quantity}
                                         style={{ width: '80px', margin: '0 auto' }}
+                                        onChange={(event) =>
+                                            changeQuantity(
+                                                product.cartProductId,
+                                                parseInt(event.target.value),
+                                                product.productId
+                                            )}
                                     />
                                 </td>
                                 <td className="text-center align-middle">
@@ -119,6 +249,7 @@ function App({ user }: AppProps) {
                                 </td>
                                 <td className="text-center align-middle">
                                     <Button variant="danger" size="sm"
+                                        onClick={() => deleteCartProduct(product.cartProductId)}
                                     >
                                         삭제
                                     </Button>
@@ -132,7 +263,7 @@ function App({ user }: AppProps) {
             </Table>
 
             {/* 좌측 정렬(text-start), 가운데 정렬(text-center), 우측 정렬(text-end) */}
-            <h3 className="text-end mt-3">총 주문 금액 : 0원</h3>
+            <h3 className="text-end mt-3">총 주문 금액 : {orderTotalPrice.toLocaleString()}원</h3>
             <div className="text-end">
                 <Button variant="primary" size="lg" >
                     주문하기

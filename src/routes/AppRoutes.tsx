@@ -10,7 +10,7 @@ import ProductList from './../pages/ProductList';
 import ProductInsertForm from './../pages/ProductInsertForm';
 import ProductUpdateForm from './../pages/ProductUpdateForm';
 import ProductDetail from './../pages/ProductDetail';
-import CartList from './../pages/CartList'
+import CartList from './../pages/CartList';
 
 interface AppProps {
   user: User | null;
