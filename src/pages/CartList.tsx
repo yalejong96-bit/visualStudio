@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import customAxios from './../api/axiosInstance';
 import type { CartProduct } from "../types/CartProduct";
 import { API_BASE_URL } from "../config/config";
-import { all } from "axios";
+// import { all } from "axios";
 
 /* 
 구조 분해 할당 + 타입 지정
@@ -108,7 +108,7 @@ function App({ user }: AppProps) {
 
     const [allCheck, setAllCheck] = useState(false);
 
-    const changeQuantity = async (cartProductId: number, quantity: number, productId: number) => {
+    const changeQuantity = async (cartProductId: number, quantity: number) => {
         // Nan : Not a Number
         if (isNaN(quantity)) { // 숫자 형식이 아니면
 
@@ -117,7 +117,7 @@ function App({ user }: AppProps) {
         }
 
         try {
-            const parameter = `quantity = ${quantity}&productId=${productId}`;
+            const parameter = `quantity = ${quantity}`;
 
             const url = `${API_BASE_URL}/cart/edit/${cartProductId}?${parameter}`;
 
@@ -169,8 +169,90 @@ function App({ user }: AppProps) {
         } else {
             alert(`'카트 상품' 삭제를 취소하셨습니다.`);
         }
-    }
+    };
 
+    // 사용자가 주문하기 버튼을 클릭하였습니다.
+    const makeOrder = async () => {
+        const selectedProducts = cartProducts.filter((bean) => bean.checked);
+
+        if (selectedProducts.length === 0) {
+            alert('주문할 상품을 선택해 주세요.')
+            return;
+        }
+
+        try {
+            const url = `${API_BASE_URL}/order`;
+            const parameters = {
+                memberId: user?.id,
+                status: 'PENDING',
+                orderItems: selectedProducts.map((product) => ({
+                    cartProductId: product.cartProductId,
+                    productId: product.productId,
+                    quantity: product.quantity
+                }))
+            };
+
+            console.log('주문할 데이터 정보');
+            console.log(parameters);
+
+            const response = await customAxios.post(url, parameters);
+
+            alert(response.data);
+
+            setCartProducts((previous) =>
+                previous.filter((product) => !product.checked)
+            );
+
+            setOrderTotalPrice(0);
+
+
+        } catch (error) {
+            console.log('주문 기능 실패');
+            console.log(error);
+        }
+    };
+
+    const deleteOrder = async () => {
+        const selectedProducts = cartProducts.filter((bean) => bean.checked);
+        const isConfirmed = window.confirm('해당 상품을 정말로 삭제하시겠습니까?');
+
+        if (selectedProducts.length === 0) {
+            alert('삭제할 상품이 없습니다.')
+            return;
+        }
+
+        if (isConfirmed) {
+            try {
+                const url = `${API_BASE_URL}/cart/delete`;
+                const parameters = {
+                    memberId: user?.id,
+                    status: 'PENDING',
+                    orderItems: selectedProducts.map((product) => ({
+                        cartProductId: product.cartProductId,
+                        productId: product.productId,
+                        quantity: product.quantity
+                    }))
+                };
+                console.log('주문할 데이터 정보');
+                console.log(parameters);
+
+                const response = await customAxios.post(url, parameters);
+
+                alert(response.data);
+
+                setCartProducts((previous) =>
+                    previous.filter((product) => !product.checked)
+                );
+
+                setOrderTotalPrice(0);
+
+            } catch (error) {
+                console.log('삭제 기능 실패');
+                console.log(error);
+            }
+
+        };
+    }
     return (
         <Container className="mt-4">
             <h2 className="mb-4">
@@ -239,8 +321,7 @@ function App({ user }: AppProps) {
                                         onChange={(event) =>
                                             changeQuantity(
                                                 product.cartProductId,
-                                                parseInt(event.target.value),
-                                                product.productId
+                                                parseInt(event.target.value)
                                             )}
                                     />
                                 </td>
@@ -264,8 +345,12 @@ function App({ user }: AppProps) {
 
             {/* 좌측 정렬(text-start), 가운데 정렬(text-center), 우측 정렬(text-end) */}
             <h3 className="text-end mt-3">총 주문 금액 : {orderTotalPrice.toLocaleString()}원</h3>
-            <div className="text-end">
-                <Button variant="primary" size="lg" >
+            <div className="d-flex justify-content-end mt-3">
+                <Button variant="danger" className="me-3 px-4" size="lg" onClick={deleteOrder}>
+                    삭제하기
+                </Button>
+
+                <Button variant="primary" className="me-3 px-4" size="lg" onClick={makeOrder}>
                     주문하기
                 </Button>
             </div>

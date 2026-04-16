@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Container, Row, Form, Col, Button, Alert } from "react-bootstrap";
 import { API_BASE_URL } from "../config/config";
 import { useNavigate } from "react-router-dom";
@@ -9,12 +9,13 @@ function App() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [checkPassword, setCheckPassword] = useState('');
     const [address, setAddress] = useState('');
 
 
     // 폼 유효성 검사(Form Validation Check) 관련 state 정의 : 입력 양식에 문제 발생시 값을 저장할 곳
     const [errors, setErrors] = useState({
-        name: '', email: '', password: '', address: '', general: ''
+        name: '', email: '', password: '', checkPassword: '', address: '', general: ''
     });
 
 
@@ -22,12 +23,31 @@ function App() {
 
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (checkPassword && password !== checkPassword) {
+            setErrors(prev => ({
+                ...prev,
+                checkPassword: '비밀번호가 일치하지 않습니다.'
+            }));
+        } else {
+            setErrors(prev => ({
+                ...prev,
+                checkPassword: ''
+            }));
+        }
+    }, [password, checkPassword]);
+
     const SignupAction = async (event: React.SubmitEvent) => {
         event.preventDefault(); // 이벤트 전파 방지
 
+        if (checkPassword === '' || password !== checkPassword) {
+            alert('비밀번호를 확인해 주세요.');
+            return;
+        }
+
         try {
             const url = `${API_BASE_URL}/member/signup`;
-            const parameters = { name, email, password, address };
+            const parameters = { name, email, password, checkPassword, address };
             const config = { withCredentials: true }
             const response = await axios.post(url, parameters, config);
 
@@ -49,7 +69,6 @@ function App() {
                 }));
             }
         }
-
     }
 
 
@@ -81,7 +100,7 @@ function App() {
                                     <Col sm={9}>
                                         <Form.Control
                                             type="text"
-                                            placeholder="이름을 입력해 주세요."
+                                            placeholder="이름을 입력해 주세요."                                            
                                             value={name}
                                             onChange={(e) => setName(e.target.value)} //
                                             isInvalid={!!errors.name}
@@ -100,7 +119,7 @@ function App() {
                                     <Col sm={9}>
                                         <Form.Control
                                             type="text"
-                                            placeholder="이메일을 입력해 주세요."
+                                            placeholder="이메일을 입력해 주세요."                                            
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             isInvalid={!!errors.email}
@@ -119,13 +138,33 @@ function App() {
                                     <Col sm={9}>
                                         <Form.Control
                                             type="password"
-                                            placeholder="비밀 번호를 입력해 주세요."
+                                            placeholder="비밀 번호를 입력해 주세요."                                            
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             isInvalid={!!errors.password}
                                         />
                                         <Form.Control.Feedback type="invalid">
                                             {errors.password}
+                                        </Form.Control.Feedback>
+                                    </Col>
+                                </Form.Group>
+
+                                <Form.Group as={Row} className="mb-3">
+                                    <Form.Label column sm={3}>
+                                        비밀번호 확인
+                                    </Form.Label>
+                                    <Col sm={9}>
+                                        <Form.Control
+                                            type="password"
+                                            placeholder="비밀 번호를 다시 입력해 주세요."                                            
+                                            value={checkPassword}
+                                            onChange={(e) => setCheckPassword(e.target.value)}
+                                            isInvalid={!!errors.checkPassword}
+                                        />
+                                        <Form.Control.Feedback type="invalid">
+                                            {errors.checkPassword && (
+                                                <p style={{ color: 'red', fontSize: '12px' }}>{errors.checkPassword}</p>
+                                            )}
                                         </Form.Control.Feedback>
                                     </Col>
                                 </Form.Group>
@@ -138,7 +177,7 @@ function App() {
                                     <Col sm={9}>
                                         <Form.Control
                                             type="text"
-                                            placeholder="주소를 입력해 주세요."
+                                            placeholder="주소를 입력해 주세요."                                           
                                             value={address}
                                             onChange={(e) => setAddress(e.target.value)}
                                             isInvalid={!!errors.address}
