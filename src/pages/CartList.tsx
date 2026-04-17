@@ -1,4 +1,4 @@
-import { Button, Col, Container, Form, Image, Row, Table } from "react-bootstrap";
+import { Alert, Button, Col, Container, Form, Image, Row, Table } from "react-bootstrap";
 
 import type { User } from "../types/User";
 import { useEffect, useState } from "react";
@@ -30,6 +30,22 @@ function App({ user }: AppProps) {
 
     const [cartProducts, setCartProducts] = useState<CartProduct[]>([]);
 
+    // 오류 정보를 저장할 스테이트
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // 오류 처리를 위한 공용 함수 작성
+    const handleApiError = (error: any) => {
+        console.log(error);
+
+        if (error.response) { // 서버에서 내려준 에러
+            const message = error.response.data;
+            setErrorMessage(message);
+
+        } else {
+            setErrorMessage('서버와 통신할 수 없습니다.')
+        }
+    };
+
     useEffect(() => {
         if (user && user?.id) {
             fetchCartProducts();
@@ -49,7 +65,7 @@ function App({ user }: AppProps) {
 
         } catch (error) {
             console.log('오류 정보');
-            console.log(error);
+            handleApiError(error);
             alert(`'카트 상품' 정보가 존재하지 않아서 상품 목록 페이지로 이동합니다.`);
             navigate('/product/list')
         }
@@ -117,7 +133,7 @@ function App({ user }: AppProps) {
         }
 
         try {
-            const parameter = `quantity = ${quantity}`;
+            const parameter = `quantity=${quantity}`;
 
             const url = `${API_BASE_URL}/cart/edit/${cartProductId}?${parameter}`;
 
@@ -138,7 +154,7 @@ function App({ user }: AppProps) {
             });
         } catch (error) {
             console.log('카트 상품 수량 변경 실패');
-            console.log(error);
+            handleApiError(error);
         }
     };
 
@@ -163,7 +179,7 @@ function App({ user }: AppProps) {
 
             } catch (error) {
                 console.log('카트 상품 삭제 동작 오류');
-                console.log(error);
+                handleApiError(error);
             }
 
         } else {
@@ -177,6 +193,12 @@ function App({ user }: AppProps) {
 
         if (selectedProducts.length === 0) {
             alert('주문할 상품을 선택해 주세요.')
+            return;
+        }
+
+        const hasInvalid = selectedProducts.some(product => product.quantity === 0);
+        if (hasInvalid) {
+            alert('최소 주문 상품 수량은 1개이상이어야 합니다.');
             return;
         }
 
@@ -208,53 +230,52 @@ function App({ user }: AppProps) {
 
         } catch (error) {
             console.log('주문 기능 실패');
-            console.log(error);
+            handleApiError(error);
         }
     };
 
     const deleteOrder = async () => {
         const selectedProducts = cartProducts.filter((bean) => bean.checked);
-        const isConfirmed = window.confirm('해당 상품을 정말로 삭제하시겠습니까?');
+
 
         if (selectedProducts.length === 0) {
             alert('삭제할 상품이 없습니다.')
             return;
         }
 
+        const isConfirmed = window.confirm(`선택한 ${selectedProducts.length}개의 상품을 삭제하시겠습니까?`);
+
         if (isConfirmed) {
             try {
-                const url = `${API_BASE_URL}/cart/delete`;
-                const parameters = {
-                    memberId: user?.id,
-                    status: 'PENDING',
-                    orderItems: selectedProducts.map((product) => ({
-                        cartProductId: product.cartProductId,
-                        productId: product.productId,
-                        quantity: product.quantity
-                    }))
-                };
-                console.log('주문할 데이터 정보');
-                console.log(parameters);
-
-                const response = await customAxios.post(url, parameters);
-
-                alert(response.data);
-
-                setCartProducts((previous) =>
-                    previous.filter((product) => !product.checked)
+                await Promise.all(
+                    selectedProducts.map(p =>
+                        customAxios.delete(`${API_BASE_URL}/cart/delete/${p.cartProductId}`)
+                    )
                 );
+                alert('삭제되었습니다.');
 
-                setOrderTotalPrice(0);
+                setCartProducts((previous) => {
+                    const updatedProducts = previous.filter((product) => !product.checked);
+                    refreshOrderTotalPrice(updatedProducts);
+                    return updatedProducts;
+                });
+
+                setAllCheck(false);
 
             } catch (error) {
                 console.log('삭제 기능 실패');
-                console.log(error);
+                handleApiError(error);
             }
 
         };
     }
     return (
         <Container className="mt-4">
+            {errorMessage && (
+                <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>
+                    {errorMessage}
+                </Alert>
+            )}
             <h2 className="mb-4">
                 {/* xxrem은 주위 글꼴의 xx배를 의미합니다. */}
                 <span style={{ color: 'blue', fontSize: '2rem' }}>{user?.name}</span>
@@ -276,8 +297,9 @@ function App({ user }: AppProps) {
                             />
                         </th>
                         <th style={thStyle}>상품 정보</th>
-                        <th style={thStyle}>단가</th>
+                        <th style={thStyle}>재고</th>
                         <th style={thStyle}>수량</th>
+                        <th style={thStyle}>단가</th>
                         <th style={thStyle}>금액</th>
                         <th style={thStyle}>삭제</th>
                     </tr>
@@ -305,12 +327,12 @@ function App({ user }: AppProps) {
                                             />
                                         </Col>
                                         <Col xs={8} className="d-flex align-items-center">
-                                            {product.name}
+                                            {product.name}({product.cartProductId})
                                         </Col>
                                     </Row>
                                 </td>
                                 <td className="text-center align-middle">
-                                    {(product.price).toLocaleString()} 원
+                                    {(product.stock).toLocaleString()}
                                 </td>
                                 <td className="text-center align-middle">
                                     <Form.Control
@@ -324,6 +346,9 @@ function App({ user }: AppProps) {
                                                 parseInt(event.target.value)
                                             )}
                                     />
+                                </td>
+                                <td className="text-center align-middle">
+                                    {(product.price).toLocaleString()} 원
                                 </td>
                                 <td className="text-center align-middle">
                                     {(product.price * product.quantity).toLocaleString()} 원

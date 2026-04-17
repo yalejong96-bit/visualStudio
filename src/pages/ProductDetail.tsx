@@ -129,6 +129,49 @@ function App({ user }: AppProps) {
         }
     }
 
+    const buyNow = async () => {
+        if (quantity < 1) {
+            alert('수량을 1개 이상 입력해 주셔야 합니다.')
+            return;
+        }
+
+        if (quantity > product.stock) {
+            alert('재고 수량이 부족합니다.')
+            return;
+        }
+
+        try {
+            const url = `${API_BASE_URL}/order`;
+            const parameters = {
+                memberId: user?.id,
+                status:'PENDING',
+                orderItems: [{
+                    productId: product.id,
+                    quantity: quantity
+                }]
+            };
+            const config = {
+                headers:{'Content-Type': 'application/json'}
+            };
+
+            console.log('주문할 데이터 정보');
+            console.log(parameters);
+
+            const response = await customAxios.post(url, parameters, config);
+
+            console.log('응답 받은 데이터');
+            console.log(response.data);
+
+            alert(`${product.name} ${quantity}개를 주문하였습니다.`);
+
+            navigate('/product/list')
+
+        } catch (error) {
+            console.log('주문 기능 실패');
+            console.log(error);
+        }
+    }
+
     return (
         <Container className="my-4">
             <Card>
@@ -209,7 +252,14 @@ function App({ user }: AppProps) {
                                     장바구니
                                 </Button>
                                 <Button variant="danger" className="me-3 px-4"
-                                    onClick={`일단오류무시`}
+                                    onClick={() => {
+                                        if (!user) {
+                                            alert('로그인이 필요한 서비스입니다.');
+                                            return navigate('/member/login');
+                                        } else {
+                                            buyNow();
+                                        }
+                                    }}
                                 >
                                     주문하기
                                 </Button>

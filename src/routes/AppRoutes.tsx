@@ -11,6 +11,7 @@ import ProductInsertForm from './../pages/ProductInsertForm';
 import ProductUpdateForm from './../pages/ProductUpdateForm';
 import ProductDetail from './../pages/ProductDetail';
 import CartList from './../pages/CartList';
+import OrderList from '../pages/OrderList';
 
 interface AppProps {
   user: User | null;
@@ -36,6 +37,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/product/detail/:id' element={<ProductDetail user={user} />} />
 
       <Route path='/cart/list' element={<CartList user={user} />} />
+      
+      <Route path='/order/list/' element={<OrderList user={user} />} />
     </Routes>
   );
 }
