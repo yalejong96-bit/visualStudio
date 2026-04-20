@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/config";
 
-import { Alert, Container, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import type { Order } from "../types/Order";
 import type { User } from "../types/User";
 import customAxios from './../api/axiosInstance';
@@ -60,6 +60,82 @@ function App({ user }: AppProps) {
 
     }, [user]);
 
+    const makeStatusButton = (bean: Order) => {
+        if (user?.role !== "ADMIN" && user?.role !== "USER") return null;
+
+        const changeCompleted = async (newStatus: string) => {
+            try {
+                const url = `${API_BASE_URL}/order/update/${bean.orderId}?status=${newStatus}`;
+                await customAxios.put(url);
+
+                alert(`송장 번호 ${bean.orderId}의 주문 상태가 ${newStatus}으로 변경이 되었습니다.`);
+
+                setOrders((previous) =>
+                    previous.filter((order) => order.orderId !== bean.orderId)
+                );
+
+            } catch (error) {
+                console.log(error);
+                alert('상태 변경(주문 완료)에 실패하였습니다.')
+            };
+        };
+
+        const orderCancel = async () => {
+            try {
+                const url = `${API_BASE_URL}/order/delete/${bean.orderId}`;
+                await customAxios.delete(url);
+
+                alert(`송장 번호 ${bean.orderId}의 주문이 취소되었습니다.`)
+
+                setOrders((previous) =>
+                    previous.filter((order) => order.orderId !== bean.orderId)
+                );
+
+            } catch (error) {
+                console.log(error);
+                alert('주문 취소를 실패하였습니다.')
+            };
+        };
+
+        return (
+            <div className="d-flex align-items-center">
+                {/* 관리자일 때 사용자 이름 표시 */}
+                {user?.role === 'ADMIN' && (
+                    <span
+                        className="me-3 px-3 py-1 border rounded fw-bold text-primary"
+                        style={{
+                            borderColor: '#0d6efd',   // 테두리 색상 (Bootstrap primary)
+                            backgroundColor: 'transparent', // 내부 채우기 제거
+                            fontSize: '0.9rem',
+                        }}
+                    >
+                        👤 {bean.name}
+                    </span>
+                )}
+                {/* `완료` 버튼은 관리자만 볼수 있습니다. */}
+                {user?.role === 'ADMIN' && (
+                    <Button
+                        variant="success"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => changeCompleted('COMPLETED')}
+                    >
+                        완료
+                    </Button>
+                )}
+
+                <Button
+                    variant="danger"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => orderCancel()}
+                >
+                    취소
+                </Button>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center p-5">
@@ -83,7 +159,46 @@ function App({ user }: AppProps) {
     return (
         <Container className="my-4">
             <h1 className="my-4">주문 내역</h1>
-            이전에 {orders.length} 개 주문하셨네요.
+            {orders.length === 0 ? (
+                <Alert variant="secondary">주문 내역이 없습니다.</Alert>
+            ) : (
+                <Row>
+                    {orders.map((bean) => (
+                        <Col key={bean.orderId} md={6} className="mb-4">
+                            <Card
+                                className="h-100 shadow-sm"
+                                style={{
+                                    border: '2px solid #495057'
+                                }}
+                            >
+                                <Card.Body>
+                                    <div className="d-flex justify-content-between">
+                                        <Card.Title>주문 번호 : {bean.orderId}</Card.Title>
+                                        <small className="text-muted">{bean.orderDate}</small>
+                                    </div>
+
+                                    <Card.Text className="text-start">
+                                        상태 : <strong>{bean.status}</strong>
+                                    </Card.Text>
+                                    <Card.Text className="text-start">
+                                        <ul>
+                                            {bean.orderItems.map((item, index) => (
+                                                <li key={index}>
+                                                    - {item.productName} ({item.quantity}개)
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </Card.Text>
+
+                                    {/* 주문 상태 변경 버튼 생성 */}
+                                    {makeStatusButton(bean)}
+                                </Card.Body>
+
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            )}
         </Container>
     );
 

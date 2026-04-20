@@ -9,12 +9,18 @@ import type { User } from "../types/User";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+import Paging from './Paging';
+
+import { initialPagingInfo, type PagingInfo } from '../types/Paging';
+
 type ProductProps = {
     user: User | null; // 로그인 하면 의미 있는 객체, 아니면 null
 };
 
 function App({ user }: ProductProps) {
     const [products, setProducts] = useState<Product[]>([]);
+
+    const [paging, setPaging] = useState<PagingInfo>(initialPagingInfo);
 
     useEffect(() => {
         const url = `${API_BASE_URL}/product/list`;
@@ -112,7 +118,7 @@ function App({ user }: ProductProps) {
                         <Card className="h-100"
                             onClick={() => navigate(`/product/detail/${item.id}`)}
                             style={{ cursor: 'pointer' }}>
-                                
+
                             <Card.Img
                                 variant="top"
                                 src={`${API_BASE_URL}/images/${item.image}`}
@@ -147,9 +153,13 @@ function App({ user }: ProductProps) {
             </Row>
 
             {/* 페이징 처리 영역 */}
+            <Paging
+                paging={paging}
+                setPaging={setPaging}
+            />
 
         </Container>
-    )
-};
+    );
+}
 
 export default App;
