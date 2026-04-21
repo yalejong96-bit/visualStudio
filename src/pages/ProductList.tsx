@@ -10,8 +10,10 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Paging from './Paging';
+import FieldSearch from "./FieldSearch";
 
 import { initialPagingInfo, type PagingInfo } from '../types/Paging';
+import { initialSearchCondition, type SearchCondition } from '../types/SearchCondition';
 
 type ProductProps = {
     user: User | null; // 로그인 하면 의미 있는 객체, 아니면 null
@@ -22,18 +24,67 @@ function App({ user }: ProductProps) {
 
     const [paging, setPaging] = useState<PagingInfo>(initialPagingInfo);
 
+    const [searchCondition, setSearchCondition] = useState<SearchCondition>(initialSearchCondition);
+
     useEffect(() => {
         const url = `${API_BASE_URL}/product/list`;
-        customAxios.get(url)
+        const parameters = {
+            params: {
+                pageNumber: paging.pageNumber,
+                pageSize: paging.pageSize,
+                searchDateType: searchCondition.searchDateType,
+                category: searchCondition.category,
+                searchMode: searchCondition.searchMode,
+                searchKeyword: searchCondition.searchKeyword
+            }
+        };
+
+        customAxios.get(url, parameters)
             .then((response) => {
                 console.log('응답 받은 데이터');
-                console.log(response);
-                setProducts(response.data);
+                console.log(response.data.content);
+                setProducts(response.data.content || []);
+
+                setPaging((prev) => {
+                    const { totalElements, totalPages, pageable } = response.data;
+
+                    const pageNumber = pageable?.pageNumber ?? 0;
+                    const pageSize = pageable?.pageSize ?? prev.pageSize;
+
+                    const beginPage = Math.floor(pageNumber / prev.pageCount) * prev.pageCount;
+
+                    const endPage = Math.min(
+                        beginPage + prev.pageCount - 1,
+                        totalPages - 1
+                    );
+
+                    const pagingStatus =
+                        totalPages === 0
+                            ? "0/0 페이지"
+                            : `${pageNumber + 1}/${totalPages} 페이지`;
+
+                    return {
+                        ...prev,
+                        totalElements,
+                        totalPages,
+                        pageNumber,
+                        pageSize,
+                        beginPage,
+                        endPage,
+                        pagingStatus
+                    };
+                });
             })
             .catch((error) => {
                 console.log(error);
             });
-    }, []);
+    }, [
+        paging.pageNumber,
+        searchCondition.searchDateType,
+        searchCondition.category,
+        searchCondition.searchMode,
+        searchCondition.searchKeyword
+    ]);
 
     const navigate = useNavigate();
 
@@ -109,6 +160,11 @@ function App({ user }: ProductProps) {
             </Link>
 
             {/* 필드 검색 영역 */}
+            <FieldSearch 
+                searchCondition={searchCondition}
+                setSearchCondition={setSearchCondition}
+                paging={paging}
+            />                
 
             {/* 자료 보여 주는 영역 */}
             <Row>

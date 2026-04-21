@@ -6,6 +6,6 @@ function App() {
             JSX 영역
         </>
     );
-}
+};
 
 export default App;
